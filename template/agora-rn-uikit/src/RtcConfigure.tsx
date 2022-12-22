@@ -30,6 +30,8 @@ import Create from './Rtc/Create';
 import Join from './Rtc/Join';
 import useLocalUid from './Utils/useLocalUid';
 
+import VirtualBackground from './VirtualBackground';
+
 const RtcConfigure = (props: {children: React.ReactNode}) => {
   const {callbacks, rtcProps} = useContext(PropsContext);
   let [dualStreamMode, setDualStreamMode] = useState<DualStreamMode>(
@@ -307,27 +309,29 @@ const RtcConfigure = (props: {children: React.ReactNode}) => {
   return (
     <Create dispatch={dispatch}>
       {(engineRef) => (
-        <Join
-          precall={!rtcProps.callActive}
-          engineRef={engineRef}
-          uidState={uidState}
-          dispatch={dispatch}>
-          <RtcProvider
-            value={{
-              RtcEngine: engineRef.current,
-              dispatch,
-              setDualStreamMode,
-            }}>
-            <RenderProvider
+        <VirtualBackground engineRef={engineRef} uidState={uidState}>
+          <Join
+            precall={!rtcProps.callActive}
+            engineRef={engineRef}
+            uidState={uidState}
+            dispatch={dispatch}>
+            <RtcProvider
               value={{
-                renderList: uidState.renderList,
-                activeUids: uidState.activeUids,
-                lastJoinedUid: uidState.lastJoinedUid,
+                RtcEngine: engineRef.current,
+                dispatch,
+                setDualStreamMode,
               }}>
-              {props.children}
-            </RenderProvider>
-          </RtcProvider>
-        </Join>
+              <RenderProvider
+                value={{
+                  renderList: uidState.renderList,
+                  activeUids: uidState.activeUids,
+                  lastJoinedUid: uidState.lastJoinedUid,
+                }}>
+                {props.children}
+              </RenderProvider>
+            </RtcProvider>
+          </Join>
+        </VirtualBackground>
       )}
     </Create>
   );

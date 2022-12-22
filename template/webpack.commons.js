@@ -139,6 +139,14 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /\.(wasm)$/i,
+        use: [
+          {
+            loader: 'file-loader',
+          },
+        ],
+      },
     ],
   },
 };
