@@ -62,8 +62,6 @@ template/*.jsbundle
 # CocoaPods
 template/ios/Pods/
 
-# UI Kit
-template/agora-rn-uikit/
 
 # Built website
 template/dist/
