@@ -59,9 +59,8 @@ const VirtualBackground: React.FC<{
   };
 
   const disableBackground = async () => {
-    const localVideoTrack = engineRef.current?.localStream?.video;
-    if (processor.current && localVideoTrack) {
-      localVideoTrack.unpipe();
+    if (processor.current) {
+      processor.current.unpipe();
       await processor.current.disable();
     }
   };
