@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useContext} from 'react';
 import {RenderStateInterface, DispatchType} from './Contexts/RtcContext';
 //@ts-ignore
 import google from '../../src/assets/google.png';
@@ -15,12 +15,15 @@ import VirtualBackgroundExtension, {
 
 import wasms from '../../node_modules/agora-extension-virtual-background/wasms/agora-wasm.wasm';
 
+import PropsContext, {ClientRole} from './Contexts/PropsContext';
+
 const VirtualBackground: React.FC<{
   children: React.ReactNode;
   uidState: RenderStateInterface;
   engineRef: React.MutableRefObject<RtcEngine>;
 }> = ({engineRef, uidState, children}: any) => {
   const {renderList, activeUids} = uidState;
+  const {rtcProps} = useContext(PropsContext);
   const [maxUid] = activeUids;
   const videoState = renderList[maxUid].video;
 
@@ -28,6 +31,7 @@ const VirtualBackground: React.FC<{
   const processor = useRef<IVirtualBackgroundProcessor>();
 
   useEffect(() => {
+    if (rtcProps.role === ClientRole.Audience) return;
     const initExtension = async () => {
       AgoraRTC.registerExtensions([ext.current]);
       processor.current = ext.current.createProcessor();
@@ -44,7 +48,7 @@ const VirtualBackground: React.FC<{
     // @ts-ignore
     let htmlElement = document.createElement('img');
     // htmlElement.crossorigin = 'anonymous'
-    htmlElement.src = google;
+    htmlElement.src = '/google.png';
 
     htmlElement.onload = async () => {
       const localVideoTrack = engineRef.current?.localStream?.video;
