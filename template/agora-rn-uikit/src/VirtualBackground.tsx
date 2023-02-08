@@ -1,5 +1,7 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {RenderStateInterface, DispatchType} from './Contexts/RtcContext';
+//@ts-ignore
+import google from '../../src/assets/google.png';
 
 // TypeDef
 import RtcEngine from 'react-native-agora';
@@ -7,22 +9,11 @@ import RtcEngine from 'react-native-agora';
 // Agora rtc web sdk
 import AgoraRTC from 'agora-rtc-sdk-ng';
 
-import VirtualBackgroundExtension from 'agora-extension-virtual-background';
+import VirtualBackgroundExtension, {
+  IVirtualBackgroundProcessor,
+} from 'agora-extension-virtual-background';
+
 import wasms from '../../node_modules/agora-extension-virtual-background/wasms/agora-wasm.wasm';
-
-let processor:any;
-
-(async () => {
-  const extension = new VirtualBackgroundExtension();
-  AgoraRTC.registerExtensions([extension]);
-  console.log('VirtualBackground Webpack path', wasms);
-  processor = extension.createProcessor();
-  await processor.init(wasms);
-  processor.setOptions({type: 'color', color: '#000000'});
-  // processor.setOptions({type: 'blur', blurDegree: 1});
-  await processor.enable();
-  
-})()
 
 const VirtualBackground: React.FC<{
   children: React.ReactNode;
@@ -32,24 +23,50 @@ const VirtualBackground: React.FC<{
   const {renderList, activeUids} = uidState;
   const [maxUid] = activeUids;
   const videoState = renderList[maxUid].video;
-  //
-  // useEffect(() => {
-  //   console.log('virtual', engineRef.current?.localStream?.video);
-  // });
-  //
+
+  const ext = useRef(new VirtualBackgroundExtension());
+  const processor = useRef<IVirtualBackgroundProcessor>();
+
   useEffect(() => {
-    console.log('virtual', engineRef.current?.localStream?.video);
-    engineRef.current?.localStream?.video
-      ?.pipe(processor)
-      .pipe(engineRef.current.localStream.video.processorDestination);
+    const initExtension = async () => {
+      AgoraRTC.registerExtensions([ext.current]);
+      processor.current = ext.current.createProcessor();
+      await processor.current.init(wasms);
+    };
+    initExtension();
+    enableBackground();
+    return () => {
+      disableBackground();
+    };
   }, [videoState]);
 
+  const enableBackground = async () => {
+    // @ts-ignore
+    let htmlElement = document.createElement('img');
+    // htmlElement.crossorigin = 'anonymous'
+    htmlElement.src = google;
 
-  return (
-    <>
-      {children}
-    </>
-  );
+    htmlElement.onload = async () => {
+      const localVideoTrack = engineRef.current?.localStream?.video;
+      if (processor.current && localVideoTrack) {
+        localVideoTrack
+          .pipe(processor.current)
+          .pipe(localVideoTrack.processorDestination);
+        processor.current.setOptions({type: 'img', source: htmlElement});
+        await processor.current.enable();
+      }
+    };
+  };
+
+  const disableBackground = async () => {
+    const localVideoTrack = engineRef.current?.localStream?.video;
+    if (processor.current && localVideoTrack) {
+      localVideoTrack.unpipe();
+      await processor.current.disable();
+    }
+  };
+
+  return <>{children}</>;
 };
 
 export default VirtualBackground;
